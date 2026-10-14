@@ -23,6 +23,15 @@ typedef struct {
 // Implementado em isr.c.
 void isr_handler(registers_t regs);
 
+// Handler generico das IRQs 0-15 (vetores 32-47), chamado por irq_common_stub.
+// Por enquanto apenas confirma a IRQ no PIC (EOI); o despacho para handlers
+// registrados e a tarefa 9.
+void irq_handler(registers_t regs);
+
+// Registra as 16 IRQs (vetores 32-47) na IDT. Chamar apos idt_install() e
+// pic_init(); as IRQs continuam mascaradas no PIC ate cada driver liberar a sua.
+void irq_install(void);
+
 // Registra as 32 excecoes da CPU na IDT. Deve ser chamada apos idt_install(),
 // antes de habilitar interrupcoes (sti).
 void isr_install(void);
@@ -60,5 +69,24 @@ extern void isr28(void);
 extern void isr29(void);
 extern void isr30(void);
 extern void isr31(void);
+
+
+// Stubs em Assembly, um por IRQ de hardware (definidos em interrupts.s).
+extern void irq0(void);
+extern void irq1(void);
+extern void irq2(void);
+extern void irq3(void);
+extern void irq4(void);
+extern void irq5(void);
+extern void irq6(void);
+extern void irq7(void);
+extern void irq8(void);
+extern void irq9(void);
+extern void irq10(void);
+extern void irq11(void);
+extern void irq12(void);
+extern void irq13(void);
+extern void irq14(void);
+extern void irq15(void);
 
 #endif
