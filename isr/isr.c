@@ -2,6 +2,7 @@
 #include "panic.h"
 #include "idt.h"
 #include "gdt.h"
+#include "pic/pic.h"
 #include <stddef.h>
 
 _Static_assert(sizeof(registers_t) == 56, "Quadro ISR deve ter 56 bytes");
@@ -71,4 +72,26 @@ void isr_install(void) {
         // Flags 0x8E: presente, DPL = 0, gate de interrupcao de 32 bits.
         idt_set_gate((uint8_t)i, (uint32_t)isr_stubs[i], SELETOR_CODIGO_KERNEL, 0x8E);
     }
+}
+
+// Handler generico das IRQs de hardware. Ainda sem tabela de handlers
+// (tarefa 9): apenas reconhece a interrupcao no PIC para nao travar a linha.
+void irq_handler(registers_t regs) {
+    asm volatile("cld" ::: "cc");
+    uint32_t irq = regs.int_no - 32;
+
+    // IRQ 7 e 15 podem ser espurias; sem tratamento ate a tarefa 9, so o EOI comum.
+    if (irq < 16)
+        pic_send_eoi((uint8_t)irq);
+}
+
+// Registra as 16 IRQs na IDT, nos vetores 32-47 (mesmo remapeamento do PIC).
+void irq_install(void) {
+    void (*irq_stubs[16])(void) = {
+        irq0,  irq1,  irq2,  irq3,  irq4,  irq5,  irq6,  irq7,
+        irq8,  irq9,  irq10, irq11, irq12, irq13, irq14, irq15
+    };
+
+    for (int i = 0; i < 16; i++)
+        idt_set_gate((uint8_t)(32 + i), (uint32_t)irq_stubs[i], SELETOR_CODIGO_KERNEL, 0x8E);
 }

@@ -112,6 +112,7 @@ void kernel_main(multiboot_info_t *mbd) {
   gdt_instalar();
   idt_install();
   isr_install();
+  irq_install();
   pic_init();
   // Fundo preto
   for (uint32_t y = 0; y < height; y++) {

@@ -12,6 +12,7 @@
 section .text
 
 extern isr_handler
+extern irq_handler
 
 ; ---------------------------------------------------------------------------
 ; Macros de geracao dos stubs
@@ -115,4 +116,62 @@ isr_common_stub:
     popa
     add esp, 8           ; descarta int_no e err_code empilhados pelo stub
     sti
+    iret
+
+; ---------------------------------------------------------------------------
+; Interrupcoes de hardware (IRQ 0-15), remapeadas pelo PIC para os vetores
+; 32-47. Nao ha codigo de erro: empilhamos um "0" falso e o numero do vetor,
+; para o quadro ficar identico ao das excecoes (mesmo registers_t).
+; ---------------------------------------------------------------------------
+%macro IRQ 2
+global irq%1
+irq%1:
+    cli
+    push dword 0
+    push dword %2
+    jmp irq_common_stub
+%endmacro
+
+IRQ 0,  32   ; Timer (PIT)
+IRQ 1,  33   ; Teclado
+IRQ 2,  34   ; Cascata (liga o PIC escravo)
+IRQ 3,  35   ; COM2
+IRQ 4,  36   ; COM1
+IRQ 5,  37   ; LPT2 / placa de som
+IRQ 6,  38   ; Disquete
+IRQ 7,  39   ; LPT1 / IRQ espuria do mestre
+IRQ 8,  40   ; RTC
+IRQ 9,  41   ; Livre / ACPI
+IRQ 10, 42   ; Livre
+IRQ 11, 43   ; Livre
+IRQ 12, 44   ; Mouse PS/2
+IRQ 13, 45   ; Coprocessador matematico
+IRQ 14, 46   ; ATA primario
+IRQ 15, 47   ; ATA secundario / IRQ espuria do escravo
+
+; Mesmo layout de pilha do isr_common_stub (ver isr.h). A diferenca e o
+; destino (irq_handler) e que NAO fazemos "sti": o iret restaura o EFLAGS
+; original, reabilitando as interrupcoes so se elas ja estavam habilitadas.
+irq_common_stub:
+    pusha
+
+    mov ax, ds
+    push eax
+
+    mov ax, 0x10        ; seletor de dados do kernel (GDT)
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    call irq_handler
+
+    pop eax
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    popa
+    add esp, 8           ; descarta int_no e err_code empilhados pelo stub
     iret
