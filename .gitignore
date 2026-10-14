@@ -1,0 +1,21 @@
+# Objetos e dependências geradas pelo compilador
+*.o
+*.d
+*.bin
+
+# Diretório de build
+build/
+
+# Imagens ISO
+*.iso
+vgos.iso
+
+# Binários gerados dentro da pasta da ISO
+iso_root/boot/*.bin
+isodir/
+
+# Configurações de editores e SO
+.vscode/
+*.swp
+*~
+.DS_Store
